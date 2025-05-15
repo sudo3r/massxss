@@ -133,7 +133,7 @@ def main():
     parser.add_argument("-p", "--payloads", required=True, help="File containing XSS payloads")
     parser.add_argument("-c", "--concurrency", type=int, default=30, 
                        help=f"Concurrent requests (default: 30)")
-    parser.add_argument("-t", "--timeout", type=int, default=20,
+    parser.add_argument("-to", "--timeout", type=int, default=20,
                        help=f"Request timeout in seconds (default: 20)")
     
     args = parser.parse_args()
