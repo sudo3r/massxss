@@ -10,8 +10,6 @@ pip install -r requirements.txt
 ```
 usage: massxss.py [-h] -t TARGETS -p PAYLOADS [-c CONCURRENCY] [-to TIMEOUT]
 
-Mass XSS Exploitation
-
 options:
   -h, --help            show this help message and exit
   -t, --targets TARGETS
