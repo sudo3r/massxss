@@ -47,8 +47,8 @@ async def fetch_url(session: aiohttp.ClientSession, url: str, timeout: int) -> O
     except asyncio.TimeoutError:
         log(f"Timeout for {url}", "w")
         return None
-    except Exception as e:
-        log(f"Error fetching {url}: {type(e).__name__}", "e")
+    except aiohttp.ClientConnectorDNSError:
+        log(f"Domain not found: {url}", "e")
         return None
 
 async def submit_payload(
