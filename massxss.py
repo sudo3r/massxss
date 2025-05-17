@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import json
 from argparse import ArgumentParser
-from colorama import Fore, Style, init
+from colorama import Fore, Style
 from typing import List, Dict, Optional
 import random
 from bs4 import BeautifulSoup
