@@ -216,7 +216,7 @@ async def run_exploits(
     connector = aiohttp.TCPConnector(
         limit=concurrency,
         force_close=True,
-        verify_ssl=False
+        ssl=False
     )
     
     stats = {
