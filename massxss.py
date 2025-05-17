@@ -125,13 +125,10 @@ async def process_target(
     check_delay: int,
     output_file: Optional[str]
 ) -> bool:
-    """Complete target processing with enhanced error reporting"""
     if not target_url.startswith(('http://', 'https://')):
         target_url = f"http://{target_url}"
     
     try:
-        log(f"Processing: {target_url}", "i")
-        
         try:
             html = await fetch_url(session, target_url, timeout)
             if not html:
