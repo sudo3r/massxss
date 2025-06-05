@@ -18,7 +18,7 @@ def parse_arguments():
     return parser.parse_args()
 
 if __name__ == '__main__':
-    from .utils import log
+    from utils import log
     try:
         asyncio.run(run_scanner(parse_arguments()))
     except KeyboardInterrupt:
