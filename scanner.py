@@ -2,20 +2,36 @@ import asyncio
 import aiohttp
 import os
 import time
+import re
+import string
+import secrets
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from collections import deque
 
 from utils import (
-    DEFAULT_PAYLOADS, VERIFICATION_PATTERNS, get_random_user_agent, log
+    DEFAULT_PAYLOADS, get_random_user_agent, log
 )
 
-def verify_xss(content, payload):
-    for pattern in VERIFICATION_PATTERNS:
-        if pattern.search(content):
-            return True
-    if payload.lower() in content.lower():
-        if any(context in content.lower() for context in ['<script>', 'onload=', 'onerror=', 'javascript:']):
+def generate_marker():
+    """Generate a unique marker for each scan."""
+    return "XSSTEST_" + ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+
+def verify_xss(content, marker):
+    lowered = content.lower()
+    if marker.lower() in lowered:
+        suspicious_contexts = [
+            f"<script>{marker.lower()}</script>",
+            f"onerror={marker.lower()}",
+            f"onload={marker.lower()}",
+            f"javascript:{marker.lower()}",
+            marker.lower()
+        ]
+        for ctx in suspicious_contexts:
+            if ctx in lowered:
+                return True
+        tag_pattern = re.compile(rf'<[^>]+{marker.lower()}[^>]*>', re.IGNORECASE)
+        if tag_pattern.search(lowered):
             return True
     return False
 
@@ -58,12 +74,14 @@ async def submit_form(session, form_url, form_data, method):
         return None
 
 async def test_stored_xss(session, form_url, form_details, payload, verify_delay):
+    marker = generate_marker()
+    test_payload = payload.replace("XSSTest", marker)
     form_data = {}
     for input_field in form_details['inputs']:
         if input_field['type'] in ['hidden', 'submit']:
             form_data[input_field['name']] = input_field.get('value', '')
         else:
-            form_data[input_field['name']] = payload
+            form_data[input_field['name']] = test_payload
     submission_response = await submit_form(session, form_url, form_data, form_details['method'])
     if not submission_response:
         return False
@@ -72,7 +90,7 @@ async def test_stored_xss(session, form_url, form_details, payload, verify_delay
     verification_response = await fetch_with_retry(session, verification_url, 1, 1)
     if not verification_response:
         return False
-    return verify_xss(verification_response, payload)
+    return verify_xss(verification_response, marker)
 
 async def process_form(session, semaphore, form_url, form_details, payloads, output_file, delay, verify_delay):
     async with semaphore:
@@ -262,7 +280,11 @@ async def run_scanner(args):
     ) as session:
         batch_size = 100
         current_batch = []
-        for url in url_generator():
+        all_targets = list(url_generator())
+        total_targets = len(all_targets)
+        processed_targets = 0
+
+        for url in all_targets:
             current_batch.append(url)
             if len(current_batch) >= batch_size:
                 results = await process_batch(
@@ -273,8 +295,11 @@ async def run_scanner(args):
                 total_vulnerable += results['vulnerable']
                 total_errors += results['errors']
                 total_pages += results['pages']
+                processed_targets += len(current_batch)
+                remaining_targets = total_targets - processed_targets
+                log(f"Progress: {total_pages} pages | {total_vulnerable} vulns | {total_errors} errors | "
+                    f"Targets: {processed_targets}/{total_targets} (remaining: {remaining_targets})", "i")
                 current_batch = []
-                log(f"Progress: {total_pages} pages processed, {total_vulnerable} confirmed vulnerabilities", "i")
         if current_batch:
             results = await process_batch(
                 session, semaphore, current_batch, payloads,
@@ -284,6 +309,11 @@ async def run_scanner(args):
             total_vulnerable += results['vulnerable']
             total_errors += results['errors']
             total_pages += results['pages']
+            processed_targets += len(current_batch)
+            remaining_targets = total_targets - processed_targets
+            log(f"Progress: {total_pages} pages | {total_vulnerable} vulns | {total_errors} errors | "
+                f"Targets: {processed_targets}/{total_targets} (remaining: {remaining_targets})", "i")
+    
     print()
     log("Scan completed", "s")
     print(f" | Pages crawled: {total_pages}")
