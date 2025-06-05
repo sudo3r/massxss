@@ -6,7 +6,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from collections import deque
 
-from .utils import (
+from utils import (
     DEFAULT_PAYLOADS, VERIFICATION_PATTERNS, get_random_user_agent, log
 )
 

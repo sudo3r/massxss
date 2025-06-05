@@ -1,6 +1,6 @@
 import argparse
 import asyncio
-from .scanner import run_scanner
+from scanner import run_scanner
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Mass stored XSS scanner')
