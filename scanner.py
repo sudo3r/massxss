@@ -110,7 +110,7 @@ async def crawl_website(session, semaphore, start_url, payloads, output_file, de
             log(f"Skipping {url} - Site not reachable", "w")
             errors += 1
             continue
-        log(f"Crawling {url} (depth {current_depth})", "i")
+        log(f"Crawling {url}", "i")
         html = await fetch_with_retry(session, url, retries, delay)
         if not html:
             errors += 1
