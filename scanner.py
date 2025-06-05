@@ -79,14 +79,17 @@ async def process_form(session, semaphore, form_url, form_details, payloads, out
         log(f"Testing form at {form_url}", "i")
         for payload in payloads:
             try:
-                is_vulnerable = await test_stored_xss(
-                    session, form_url, form_details, payload, verify_delay
-                )
+                is_vulnerable = await test_stored_xss(session, form_url, form_details, payload, verify_delay)
+                
                 if is_vulnerable:
-                    log(f"Vulnerable: {form_url} - Payload: {payload}", "s")
+                    vulnerable_params = []
+                    for input_field in form_details['inputs']:
+                        if input_field['type'] not in ['hidden', 'submit']:
+                            vulnerable_params.append(input_field['name'])
+                    log(f"Vulnerable: {form_url} - Payload: {payload} - Parameter(s): {', '.join(vulnerable_params)}", "s")
                     if output_file:
                         with open(output_file, 'a') as f:
-                            f.write(f"{form_url} - Payload: {payload}\n")
+                            f.write(f"{form_url} - Payload: {payload} - Parameter(s): {', '.join(vulnerable_params)}\n")
                     return True
             except Exception as e:
                 log(f"Error testing payload on {form_url}: {str(e)}", "w")
