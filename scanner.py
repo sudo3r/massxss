@@ -14,8 +14,7 @@ from utils import (
 )
 
 def generate_marker():
-    """Generate a unique marker for each scan."""
-    return "XSSTEST_" + ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+    return ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
 
 def verify_xss(content, marker):
     lowered = content.lower()
